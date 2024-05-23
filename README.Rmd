@@ -27,14 +27,14 @@ You can install the development version of adjustR from [GitHub](https://github.
 ``` r
 # install.packages("devtools")
 devtools::install_github("scveatch/adjustR")
-```
+``` 
 
 ## Example
 
 This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-library(adjustR)
+# library(adjustR)
 ## basic example code
 ```
 
