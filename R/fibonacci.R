@@ -19,9 +19,9 @@ fib <- function(n){
   y = 1
 
   for (i in 1:n){
-    temp = a
-    a = b
-    b = temp + a
+    temp = x
+    x = y
+    y = temp + x
   }
   return(x)
 }
