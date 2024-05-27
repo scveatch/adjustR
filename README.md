@@ -4,6 +4,8 @@
 # adjustR
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/scveatch/adjustR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/scveatch/adjustR/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of adjustR is to …
