@@ -7,13 +7,17 @@
 next_prime(n)
 }
 \arguments{
-\item{n}{An input number specifying the starting place for the next prime}
+\item{n}{A non-negative integer specifying the starting place for the
+next prime.}
 }
 \value{
 An integer value for the nearest prime number after \code{n}.
 }
 \description{
 Returns the next prime from a given number \code{n}.
+}
+\details{
+Returns an error if \code{n} is negative.
 }
 \examples{
 next_prime(3)
