@@ -1,47 +1,51 @@
-# Create sample data
-create_sample_data <- function(n = 20) {
-  set.seed(123) # for reproducibility
-  data <- data.frame(
-    id = 1:n,
-    weight = stats::runif(n, 0.5, 1.5),
-    stratum = sample(1:5, n, replace = TRUE),
-    topbox = sample(c("Yes", "No"), n, replace = TRUE),
-    mode = sample(c("Phone", "Web"), n, replace = TRUE),
-    gender = sample(c("M", "F"), n, replace = TRUE),
-    response = rbinom(n, 1, 0.7)
-  )
+gof_fixture = function(test){
+  # Generate fresh object
+  gof_obj = create_gof_object()
 
-  design <- survey::svydesign(
-    ids = ~data$id,
-    weights = ~data$weight,
-    strata = ~data$stratum,
-    data = data
-  )
+  # Test
+  test(gof_obj)
 
-  model <- survey::svyglm(
-    response ~ topbox + mode + gender, design = design, family = quasibinomial()
-  )
-
-  return(list(data = data, design = design, model = model))
+  # Cleanup
+  rm(gof_obj)
 }
 
-sample_data <- create_sample_data()
-
 test_that("adjustR_gof constructer works properly", {
-  gof_obj <- tryCatch({
-    adjustR_gof(sample_data$model, topbox, "Yes", mode)
-  }, error = function(e) {
-    fail(paste("Error creating gof_obj:", e$message))
-    return(NULL)
+  gof_fixture(function(gof_obj){
+
+    expect_false(is.null(gof_obj), "gof_obj was not created successfully")
+
+    if (!is.null(gof_obj)) {
+      expect_s3_class(gof_obj, "adjustR_gof")
+      expect_named(gof_obj, c("model", "topbox_col", "topbox_value", "mode_col",
+                              "cells", "matched_cells", "null_distribution", "simulations"))
+      expect_equal(gof_obj$topbox_col, "topbox")
+      expect_equal(gof_obj$mode_col, "mode")
+    }
+  })
+})
+
+test_that("validate gof works correctly", {
+  gof_fixture(function(gof_obj){
+    expect_null(validate_adjustR_gof(gof_obj))
+
+    invalid = gof_obj
+    invalid$topbox_col = "non-existent-col"
+    expect_error(validate_adjustR_gof(invalid), "'topbox_col not found in survey data")
   })
 
-  expect_false(is.null(gof_obj), "gof_obj was not created successfully")
+  gof_fixture(function(gof_obj){
+    invalid2 = gof_obj
+    invalid2$topbox_value = "non-existent-value"
+    expect_error(validate_adjustR_gof(invalid2), "'topbox_value' not found in 'topbox_col'")
+  })
 
-  if (!is.null(gof_obj)) {
-    expect_s3_class(gof_obj, "adjustR_gof")
-    expect_named(gof_obj, c("model", "topbox_col", "topbox_value", "mode_col",
-                            "cells", "matched_cells", "null_distribution", "simulations"))
-    expect_equal(gof_obj$topbox_col, "topbox")
-    expect_equal(gof_obj$mode_col, "mode")
-  }
+  gof_fixture(function(gof_obj){
+    invalid3 = gof_obj
+    invalid3$mode_col = "non-existent-col"
+    expect_error(validate_adjustR_gof(invalid3), "'mode_col not found in survey data")
+  })
+
 })
+
+
+
