@@ -8,7 +8,7 @@
 #' @param mode_col Name of the mode column
 #' @param additional_strata Additional stratification variables (optional)
 #' @return A adjustR_gof object
-#' @importFrom rlang enquo as_name sym
+#' @importFrom rlang enquo as_name sym stats formula
 #' @export
 
 adjustR_gof <- function(model, topbox_col, topbox_value, mode_col) {
