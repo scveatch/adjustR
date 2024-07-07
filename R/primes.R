@@ -13,13 +13,13 @@
 #' sieve(20)
 #' @export
 
-sieve <- function(n){
-  if (n < 1){
+sieve <- function(n) {
+  if (n < 1) {
     stop("Input must be greater than 0")
   }
   sieve <- rep(TRUE, n)
-  sieve[1] = FALSE
-  prime = 2
+  sieve[1] <- FALSE
+  prime <- 2
 
   while (prime^2 <= n) {
     if (sieve[prime]) {
@@ -27,9 +27,9 @@ sieve <- function(n){
       sieve[seq.int(prime^2, n, prime)] <- FALSE
     }
     # Find the next prime number
-    prime = prime + 1
+    prime <- prime + 1
     while (prime <= n && !sieve[prime]) {
-      prime = prime + 1
+      prime <- prime + 1
     }
   }
   return(which(sieve))
@@ -50,18 +50,16 @@ sieve <- function(n){
 #' next_prime(25)
 #' @export
 
-next_prime <- function(n){
-  if (n <= 0){
+next_prime <- function(n) {
+  if (n <= 0) {
     stop("Input must be non-negative")
   }
-  p = n + 1
-  vals = 2:n
-  while(TRUE){
-    if( !any( (p %% vals) == 0) ){
+  p <- n + 1
+  vals <- 2:n
+  while (TRUE) {
+    if (!any((p %% vals) == 0)) {
       return(p)
     }
-    p = p + 1
+    p <- p + 1
   }
 }
-
-

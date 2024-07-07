@@ -17,6 +17,3 @@ test_that("Next Prime stops negative", {
 test_that("Next Prime stops 0", {
   expect_error(next_prime(0), "Input must be non-negative")
 })
-
-
-
