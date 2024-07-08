@@ -9,6 +9,14 @@ gof_fixture = function(test){
   rm(gof_obj)
 }
 
+data_fixture = function(test){
+  objs = create_data_object()
+
+  test(objs)
+
+  rm(objs)
+}
+
 test_that("adjustR_gof constructer works properly", {
   gof_fixture(function(gof_obj){
 
@@ -24,7 +32,7 @@ test_that("adjustR_gof constructer works properly", {
   })
 })
 
-test_that("validate gof works correctly", {
+test_that("validate gof object returns proper errors", {
   gof_fixture(function(gof_obj){
     expect_null(validate_adjustR_gof(gof_obj))
 
@@ -43,6 +51,13 @@ test_that("validate gof works correctly", {
     invalid3 = gof_obj
     invalid3$mode_col = "non-existent-col"
     expect_error(validate_adjustR_gof(invalid3), "'mode_col not found in survey data")
+  })
+
+  data_fixture(function(objs){
+    data = objs$model$data
+    data$mode = "single_value_entry"
+    invalid_gof = adjustR_gof(objs$model, "topbox", 1, "mode")
+    expect_error(validate_adjustR_gof(invalid_gof), "'mode_col' must have at least two unique values")
   })
 
 })

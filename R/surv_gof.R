@@ -6,26 +6,18 @@
 #' @param topbox_col Name of the top box column
 #' @param topbox_value Value indicating the top box in topbox_col
 #' @param mode_col Name of the mode column
-#' @param additional_strata Additional stratification variables (optional)
-#' @return A adjustR_gof object
-#' @importFrom rlang enquo as_name sym stats formula
+#' @return An adjustR_gof object
+#' @importFrom rlang enquo as_name sym
 #' @export
 
 adjustR_gof <- function(model, topbox_col, topbox_value, mode_col) {
-  # Capture the expressions
-  topbox_col_expr <- rlang::enquo(topbox_col)
-  mode_col_expr <- rlang::enquo(mode_col)
-
-  # Convert expressions to strings
-  topbox_col_name <- rlang::as_name(topbox_col_expr)
-  mode_col_name <- rlang::as_name(mode_col_expr)
 
   result <- structure(
     list(
       model = model,
-      topbox_col = topbox_col_name,
+      topbox_col = topbox_col,
       topbox_value = topbox_value,
-      mode_col = mode_col_name,
+      mode_col = mode_col,
       cells = NULL,
       matched_cells = NULL,
       null_distribution = NULL,
@@ -41,7 +33,7 @@ adjustR_gof <- function(model, topbox_col, topbox_value, mode_col) {
 #'
 #' @param m a adjustR_gof object to validate
 #' @return The validated adjustR_gof object
-#' @throws An error if the model object is invalid
+#' Throws an error if the model object is invalid
 
 validate_adjustR_gof <- function(m) {
   # Check that model is a list with the correct class
@@ -76,13 +68,55 @@ validate_adjustR_gof <- function(m) {
   }
 
   # Check that mode column has at least 2 values, warn if more
-  if (length(unique(model_data[[m$mode_col]])) < 2) {
+  if (length(unique(model_data[, m$mode_col])) < 2) {
     stop("'mode_col' must have at least two unique values")
   }
-  if (length(unique(model_data[[m$mode_col]])) > 2) {
+  # Warn if multi-modal analysis is attempted
+  if (length(unique(model_data[, m$mode_col])) > 2) {
     warning("Function does not yet support multimodal analyses")
   }
   invisible(NULL)
+}
+
+#' Wrapper Function
+#'
+#' @description
+#' This is a wrapper function to create the adjustR_gof object and implement
+#' the Goodness-of-Fit test. It is a public-facing method.
+#'
+run_gof_test = function(model, topbox_col, topbox_value, mode_col){
+  # Capture the expressions
+  topbox_col_expr <- rlang::enquo(topbox_col)
+  mode_col_expr <- rlang::enquo(mode_col)
+
+  # Convert expressions to strings
+  topbox_col_name <- rlang::as_name(topbox_col_expr)
+  mode_col_name <- rlang::as_name(mode_col_expr)
+
+  gof_object = adjustR_gof(model, topbox_col_name, topbox_value, mode_col_name)
+
+  gof_object = run_test(gof_object)
+
+  return(gof_object)
+}
+
+#' Implement Goodness-of-Fit test
+#'
+#' @description
+#' The main function associated with the Goodness-of-Fit hypothesis test.
+#' Implements the adjustR_gof methods to process data, calculate observed
+#' test statistics and simulations. Modifies the adjustR_gof object in place
+#' and returns the object invisbly.
+#' @param m An adjustR_gof object
+#'
+run_test = function(m, ...){
+  UseMethod("run_test")
+}
+
+run_test.adjustR_gof = function(m, ...){
+  m$cells = generate_post_cells.adjustR_gof(m, ...)
+
+  return(invisible(m))
 }
 
 #' Generate post-stratification cells for a adjustR_gof object
@@ -96,17 +130,12 @@ validate_adjustR_gof <- function(m) {
 #' @param m An adjustR_gof object
 #' @param ... Additional Arguments (not used)
 #' @return A dataframe of post-stratification cells
-#' @export
-generate_post_cells <- function(m, ...) {
-  UseMethod("generate_post_cells")
-}
-
 generate_post_cells.adjustR_gof <- function(m, ...) {
   data <- m$model$data
 
   strata <- unique(c(
     all.vars(formula(m$model))[-1],
-    colnames(m$model$survey.design$strata)
+    sub(".*\\$", "", colnames(m$model$survey.design$strata)) # remove table name if exists
   ))
 
   topbox_col_sym <- rlang::sym(m$topbox_col)
@@ -114,15 +143,16 @@ generate_post_cells.adjustR_gof <- function(m, ...) {
   topcells <- data %>%
     dplyr::filter(!!topbox_col_sym == m$topbox_value) %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(strata))) %>%
-    dplyr::summarize(n = dplyr::n(), .groups = "drop")
+    dplyr::summarize(numerator = dplyr::n())
 
   cells <- data %>%
-    dplyr::group(dplyr::across(dplyr::all_of(strata))) %>%
-    dplyr::summarise(n = dplyr::n(), .groups = "drop")
+    dplyr::group_by(dplyr::across(dplyr::all_of(strata))) %>%
+    dplyr::summarise(n = dplyr::n())
 
   prop_cells <- topcells %>%
-    dplyr::left_join(cells, by = strata) %>%
+    dplyr::left_join(cells) %>%
     dplyr::mutate(sampProp = numerator / n)
 
   return(prop_cells)
 }
+
